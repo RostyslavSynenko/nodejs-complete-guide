@@ -1,0 +1,21 @@
+{
+  "name": "nodejs-course-project",
+  "version": "0.0.1",
+  "description": "Node.js Complete Guide",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "keywords": [
+    "node.js",
+    "express"
+  ],
+  "author": "Rostyslav Synenko",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.14"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
