@@ -10,8 +10,9 @@
       <h1>My Products</h1>
       <p>List of all the products...</p>
       -->
-      <% if (prods.length > 0) { %> <% for (const product of prods) { %>
+      <% if (prods.length > 0) { %>
       <div class="grid">
+        <% for (let product of prods) { %>
         <article class="card product-item">
           <header class="card__header">
             <h1 class="product__title"><%= product.title %></h1>
@@ -33,8 +34,9 @@
             <button class="btn">Add to Cart</button>
           </div>
         </article>
+        <% } %>
       </div>
-      <% } %> <% } else { %>
+      <% } else { %>
       <h1>No Products Found</h1>
       <% } %>
     </main>
