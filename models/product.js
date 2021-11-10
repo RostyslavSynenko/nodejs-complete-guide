@@ -26,6 +26,8 @@ class Product {
   save() {
     const productsPath = path.join(rootDir, 'data', 'products.json');
 
+    this.id = Date.now();
+
     getProductsFromFile(products => {
       products.push(this);
 
@@ -37,6 +39,14 @@ class Product {
 
   static fetchAll(cb) {
     getProductsFromFile(cb);
+  }
+
+  static findById(id, cb) {
+    getProductsFromFile(products => {
+      const product = products.find(product => product.id === +id);
+
+      cb(product);
+    });
   }
 }
 
