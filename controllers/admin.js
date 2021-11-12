@@ -1,4 +1,5 @@
 const Product = require('../models/product');
+const User = require('../models/user');
 
 const getAddProduct = (req, res) => {
   res.render('admin/edit-product', {
@@ -10,14 +11,22 @@ const getAddProduct = (req, res) => {
 
 const postAddProduct = (req, res) => {
   const { title, imageUrl, price, description } = req.body;
-  const product = new Product(null, title, imageUrl, description, price);
 
-  product
-    .save()
-    .then(() => {
+  req.user
+    .createProduct({
+      title,
+      imageUrl,
+      price,
+      description
+    })
+    .then(result => {
+      console.log('Created Product');
+
       res.redirect('/');
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const getEditProduct = (req, res) => {
@@ -29,8 +38,11 @@ const getEditProduct = (req, res) => {
 
   const { productId } = req.params;
 
-  Product.findById(productId)
-    .then(([[product]]) => {
+  req.user
+    .getProducts({ where: { id: productId } })
+    .then(products => {
+      const product = products[0];
+
       if (!product) {
         return res.redirect('/');
       }
@@ -50,23 +62,25 @@ const getEditProduct = (req, res) => {
 const postEditProduct = (req, res) => {
   const { productId, title, price, description, imageUrl } = req.body;
 
-  const updatedProduct = new Product(
-    +productId,
-    title,
-    imageUrl,
-    description,
-    price
-  );
-
-  updatedProduct.save().then(() => {
-    res.redirect('/admin/products');
-  });
+  Product.findByPk(+productId)
+    .then(product => {
+      return product.update({ title, imageUrl, description, price });
+    })
+    .then(() => {
+      res.redirect('/admin/products');
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const postDeleteProduct = (req, res) => {
   const { productId } = req.body;
 
-  Product.deleteById(productId)
+  Product.findByPk(productId)
+    .then(product => {
+      return product.destroy();
+    })
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -76,8 +90,9 @@ const postDeleteProduct = (req, res) => {
 };
 
 const getProducts = (req, res) => {
-  Product.fetchAll()
-    .then(([products]) => {
+  req.user
+    .getProducts()
+    .then(products => {
       res.render('admin/products', {
         prods: products,
         pageTitle: 'Admin Products',

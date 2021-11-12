@@ -18,6 +18,7 @@
   "dependencies": {
     "ejs": "^3.1.6",
     "express": "^4.17.1",
-    "mysql2": "^2.3.3-rc.0"
+    "mysql2": "^2.3.3-rc.0",
+    "sequelize": "^6.9.0"
   }
 }
