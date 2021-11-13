@@ -1,7 +1,7 @@
 const Product = require('../models/product');
 
 const getProducts = (req, res) => {
-  Product.findAll()
+  Product.fetchAll()
     .then(products => {
       res.render('shop/product-list', {
         prods: products,
@@ -17,7 +17,7 @@ const getProducts = (req, res) => {
 const getProduct = (req, res) => {
   const { productId } = req.params;
 
-  Product.findByPk(productId)
+  Product.findById(productId)
     .then(product => {
       res.render('shop/product-detail', {
         path: '/products',
@@ -31,7 +31,7 @@ const getProduct = (req, res) => {
 };
 
 const getIndex = (req, res) => {
-  Product.findAll()
+  Product.fetchAll()
     .then(products => {
       res.render('shop/index', {
         prods: products,
@@ -65,26 +65,9 @@ const getCart = (req, res) => {
 const postCart = (req, res) => {
   const { productId } = req.body;
   let quantity = 1;
-  let fetchedCart;
-
-  req.user
-    .getCart()
-    .then(cart => {
-      fetchedCart = cart;
-
-      return cart.getProducts({ where: { id: productId } });
-    })
-    .then(([product]) => {
-      if (product) {
-        quantity = product.cartItem.quantity + 1;
-
-        return product;
-      }
-
-      return Product.findByPk(productId);
-    })
+  Product.findById(productId)
     .then(product => {
-      return fetchedCart.addProduct(product, { through: { quantity } });
+      return req.user.addToCart(product);
     })
     .then(() => {
       res.redirect('/cart');
