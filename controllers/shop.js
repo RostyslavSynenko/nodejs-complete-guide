@@ -1,4 +1,3 @@
-const Cart = require('../models/cart');
 const Product = require('../models/product');
 
 const getProducts = (req, res) => {
@@ -98,10 +97,15 @@ const postCart = (req, res) => {
 const postCartDeleteProduct = (req, res) => {
   const { productId } = req.body;
 
-  Product.findByPk(productId)
-    .then(product => {
-      Cart.deleteProduct(productId, product.price);
-
+  req.user
+    .getCart()
+    .then(cart => {
+      return cart.getProducts({ where: { id: productId } });
+    })
+    .then(([product]) => {
+      return product.cartItem.destroy();
+    })
+    .then(result => {
       res.redirect('/cart');
     })
     .catch(err => {
@@ -109,18 +113,53 @@ const postCartDeleteProduct = (req, res) => {
     });
 };
 
-const getOrders = (req, res) => {
-  res.render('shop/orders', {
-    pageTitle: 'Your Orders',
-    path: '/orders'
-  });
+const postOrder = (req, res) => {
+  let fetchedCart;
+
+  req.user
+    .getCart()
+    .then(cart => {
+      fetchedCart = cart;
+
+      return cart.getProducts();
+    })
+    .then(products => {
+      return req.user.createOrder().then(order => {
+        return order.addProducts(
+          products.map(product => {
+            product.orderItem = {
+              quantity: product.cartItem.quantity
+            };
+
+            return product;
+          })
+        );
+      });
+    })
+    .then(result => {
+      return fetchedCart.setProducts(null);
+    })
+    .then(result => {
+      res.redirect('/orders');
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
-const getCheckout = (req, res) => {
-  res.render('shop/checkout', {
-    pageTitle: 'Checkout',
-    path: '/checkout'
-  });
+const getOrders = (req, res) => {
+  req.user
+    .getOrders({ include: ['products'] })
+    .then(orders => {
+      res.render('shop/orders', {
+        pageTitle: 'Your Orders',
+        path: '/orders',
+        orders
+      });
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 module.exports = {
@@ -130,6 +169,6 @@ module.exports = {
   getCart,
   postCart,
   postCartDeleteProduct,
-  getOrders,
-  getCheckout
+  postOrder,
+  getOrders
 };
