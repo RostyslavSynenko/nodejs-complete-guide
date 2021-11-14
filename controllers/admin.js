@@ -11,14 +11,13 @@ const getAddProduct = (req, res) => {
 
 const postAddProduct = (req, res) => {
   const { title, price, description, imageUrl } = req.body;
-  const product = new Product(
+  const product = new Product({
     title,
     price,
     description,
     imageUrl,
-    null,
-    req.user._id
-  );
+    userId: req.user
+  });
 
   product
     .save()
@@ -60,10 +59,15 @@ const getEditProduct = (req, res) => {
 const postEditProduct = (req, res) => {
   const { productId, title, price, description, imageUrl } = req.body;
 
-  const product = new Product(title, price, description, imageUrl, productId);
+  Product.findById(productId)
+    .then(product => {
+      product.title = title;
+      product.price = price;
+      product.description = description;
+      product.imageUrl = imageUrl;
 
-  product
-    .save()
+      return product.save();
+    })
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -75,7 +79,7 @@ const postEditProduct = (req, res) => {
 const postDeleteProduct = (req, res) => {
   const { productId } = req.body;
 
-  Product.deleteById(productId)
+  Product.deleteOne({ _id: productId })
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -85,7 +89,8 @@ const postDeleteProduct = (req, res) => {
 };
 
 const getProducts = (req, res) => {
-  Product.fetchAll()
+  Product.find()
+    // .populate('userId', '-cart')
     .then(products => {
       res.render('admin/products', {
         prods: products,
