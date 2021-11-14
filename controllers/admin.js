@@ -1,5 +1,5 @@
 const Product = require('../models/product');
-const User = require('../models/user');
+// const User = require('../models/user');
 
 const getAddProduct = (req, res) => {
   res.render('admin/edit-product', {
@@ -10,18 +10,19 @@ const getAddProduct = (req, res) => {
 };
 
 const postAddProduct = (req, res) => {
-  const { title, imageUrl, price, description } = req.body;
+  const { title, price, description, imageUrl } = req.body;
+  const product = new Product(
+    title,
+    price,
+    description,
+    imageUrl,
+    null,
+    req.user._id
+  );
 
-  req.user
-    .createProduct({
-      title,
-      imageUrl,
-      price,
-      description
-    })
+  product
+    .save()
     .then(result => {
-      console.log('Created Product');
-
       res.redirect('/');
     })
     .catch(err => {
@@ -38,11 +39,8 @@ const getEditProduct = (req, res) => {
 
   const { productId } = req.params;
 
-  req.user
-    .getProducts({ where: { id: productId } })
-    .then(products => {
-      const product = products[0];
-
+  Product.findById(productId)
+    .then(product => {
       if (!product) {
         return res.redirect('/');
       }
@@ -62,10 +60,10 @@ const getEditProduct = (req, res) => {
 const postEditProduct = (req, res) => {
   const { productId, title, price, description, imageUrl } = req.body;
 
-  Product.findByPk(+productId)
-    .then(product => {
-      return product.update({ title, imageUrl, description, price });
-    })
+  const product = new Product(title, price, description, imageUrl, productId);
+
+  product
+    .save()
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -77,10 +75,7 @@ const postEditProduct = (req, res) => {
 const postDeleteProduct = (req, res) => {
   const { productId } = req.body;
 
-  Product.findByPk(productId)
-    .then(product => {
-      return product.destroy();
-    })
+  Product.deleteById(productId)
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -90,8 +85,7 @@ const postDeleteProduct = (req, res) => {
 };
 
 const getProducts = (req, res) => {
-  req.user
-    .getProducts()
+  Product.fetchAll()
     .then(products => {
       res.render('admin/products', {
         prods: products,
