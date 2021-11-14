@@ -7,7 +7,8 @@ const getProducts = (req, res) => {
       res.render('shop/product-list', {
         prods: products,
         pageTitle: 'All Products',
-        path: '/products'
+        path: '/products',
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch(err => {
@@ -23,7 +24,8 @@ const getProduct = (req, res) => {
       res.render('shop/product-detail', {
         path: '/products',
         pageTitle: product.title,
-        product
+        product,
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch(err => {
@@ -37,7 +39,8 @@ const getIndex = (req, res) => {
       res.render('shop/index', {
         prods: products,
         pageTitle: 'Shop',
-        path: '/'
+        path: '/',
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch(err => {
@@ -46,6 +49,8 @@ const getIndex = (req, res) => {
 };
 
 const getCart = (req, res) => {
+  console.log(req.user);
+
   req.user
     .populate('cart.items.product')
     .then(user => {
@@ -54,7 +59,8 @@ const getCart = (req, res) => {
       res.render('shop/cart', {
         pageTitle: 'Your Cart',
         path: '/cart',
-        products
+        products,
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch(err => {
@@ -128,7 +134,8 @@ const getOrders = (req, res) => {
       res.render('shop/orders', {
         pageTitle: 'Your Orders',
         path: '/orders',
-        orders
+        orders,
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch(err => {
