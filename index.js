@@ -4,9 +4,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
+const csrf = require('csurf');
+const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
 const User = require('./models/user');
+const isAuth = require('./middleware/is-auth');
 
 const authRouter = require('./routes/auth');
 const adminRouter = require('./routes/admin');
@@ -20,6 +23,7 @@ const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: 'sessions'
 });
+const csrfProtection = csrf();
 
 store.on('error', error => {
   console.log(error);
@@ -39,6 +43,8 @@ app.use(
     store
   })
 );
+app.use(csrfProtection);
+app.use(flash());
 
 app.use((req, res, next) => {
   if (!req.session.user) {
@@ -56,8 +62,15 @@ app.use((req, res, next) => {
     });
 });
 
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+
+  next();
+});
+
 app.use(authRouter);
-app.use('/admin', adminRouter);
+app.use('/admin', isAuth, adminRouter);
 app.use(shopRoutes);
 
 app.use(errorController.getPageNotFound);
@@ -65,18 +78,6 @@ app.use(errorController.getPageNotFound);
 mongoose
   .connect(MONGODB_URI)
   .then(() => {
-    User.findOne().then(user => {
-      if (!user) {
-        const newUser = new User({
-          name: 'Rostyslav',
-          email: 'test@email.com',
-          cart: { items: [] }
-        });
-
-        newUser.save();
-      }
-    });
-
     app.listen(3000, () => console.log('\nServer running on port 3000\n'));
   })
   .catch(err => {
