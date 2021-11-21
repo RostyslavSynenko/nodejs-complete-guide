@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const sendgridTransport = require('nodemailer-sendgrid-transport');
+const { validationResult } = require('express-validator');
 
 const User = require('../models/user');
 
@@ -27,28 +28,61 @@ const getLogin = (req, res) => {
   res.render('auth/login', {
     pageTitle: 'Login',
     path: '/login',
-    errorMessage
+    errorMessage,
+    oldInput: {
+      email: '',
+      password: ''
+    },
+    validationErrors: []
   });
 };
 
 const postLogin = (req, res) => {
   const { email, password } = req.body;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(422).render('auth/login', {
+      pageTitle: 'Login',
+      path: '/login',
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
+        email,
+        password
+      },
+      validationErrors: errors.array()
+    });
+  }
 
   User.findOne({ email })
     .then(user => {
       if (!user) {
-        req.flash('error', 'Invalid email or password');
-
-        return res.redirect('/login');
+        return res.status(422).render('auth/login', {
+          pageTitle: 'Login',
+          path: '/login',
+          errorMessage: 'Invalid email or password',
+          oldInput: {
+            email,
+            password
+          },
+          validationErrors: []
+        });
       }
 
       bcrypt
         .compare(password, user.password)
         .then(doMatch => {
           if (!doMatch) {
-            req.flash('error', 'Invalid email or password');
-
-            return res.redirect('/login');
+            return res.status(422).render('auth/login', {
+              pageTitle: 'Login',
+              path: '/login',
+              errorMessage: 'Invalid email or password',
+              oldInput: {
+                email,
+                password
+              },
+              validationErrors: []
+            });
           }
 
           req.session.isLoggedIn = true;
@@ -84,42 +118,54 @@ const getSignup = (req, res) => {
   res.render('auth/signup', {
     pageTitle: 'Signup',
     path: '/signup',
-    errorMessage
+    errorMessage,
+    oldInput: {
+      email: '',
+      password: '',
+      confirmPassword: ''
+    },
+    validationErrors: []
   });
 };
 
 const postSignup = (req, res) => {
   const { email, password, confirmPassword } = req.body;
+  const errors = validationResult(req);
 
-  User.findOne({ email })
-    .then(user => {
-      if (user) {
-        req.flash('error', 'User with such email already exists');
+  if (!errors.isEmpty()) {
+    return res.status(422).render('auth/signup', {
+      pageTitle: 'Signup',
+      path: '/signup',
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
+        email,
+        password,
+        confirmPassword
+      },
+      validationErrors: errors.array()
+    });
+  }
 
-        return res.redirect('/signup');
-      }
+  bcrypt
+    .hash(password, 12)
+    .then(hashedPassword => {
+      const newUser = new User({
+        email,
+        password: hashedPassword,
+        cart: { items: [] }
+      });
 
-      return bcrypt
-        .hash(password, 12)
-        .then(hashedPassword => {
-          const newUser = new User({
-            email,
-            password: hashedPassword,
-            cart: { items: [] }
-          });
+      return newUser.save();
+    })
+    .then(() => {
+      res.redirect('/login');
 
-          return newUser.save();
-        })
-        .then(() => {
-          res.redirect('/login');
-
-          return transporter.sendMail({
-            to: email,
-            from: 'rostik-911@ukr.net',
-            subject: 'Signup succeeded!',
-            html: '<h1>You successfully signed up!</h1>'
-          });
-        });
+      return transporter.sendMail({
+        to: email,
+        from: 'rostik-911@ukr.net',
+        subject: 'Signup succeeded!',
+        html: '<h1>You successfully signed up!</h1>'
+      });
     })
     .catch(err => {
       console.log(err);
