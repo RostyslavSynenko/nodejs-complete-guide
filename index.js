@@ -25,8 +25,8 @@ const store = new MongoDBStore({
 });
 const csrfProtection = csrf();
 
-store.on('error', error => {
-  console.log(error);
+store.on('error', err => {
+  console.log(err);
 });
 
 app.set('view engine', 'ejs');
