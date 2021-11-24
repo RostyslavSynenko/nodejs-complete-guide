@@ -14,7 +14,7 @@ const getAddProduct = (req, res) => {
   });
 };
 
-const postAddProduct = (req, res) => {
+const postAddProduct = (req, res, next) => {
   const { title, price, description, imageUrl } = req.body;
   const errors = validationResult(req);
 
@@ -41,14 +41,20 @@ const postAddProduct = (req, res) => {
   product
     .save()
     .then(result => {
-      res.redirect('/');
+      res.redirect('/admin/products');
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const getEditProduct = (req, res) => {
+const getEditProduct = (req, res, next) => {
   const editMode = req.query.edit === 'true';
 
   if (!editMode) {
@@ -75,10 +81,16 @@ const getEditProduct = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const postEditProduct = (req, res) => {
+const postEditProduct = (req, res, next) => {
   const { productId, title, price, description, imageUrl } = req.body;
   const errors = validationResult(req);
 
@@ -111,10 +123,16 @@ const postEditProduct = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const postDeleteProduct = (req, res) => {
+const postDeleteProduct = (req, res, next) => {
   const { productId } = req.body;
 
   Product.deleteOne({ _id: productId, userId: req.user._id })
@@ -123,10 +141,16 @@ const postDeleteProduct = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const getProducts = (req, res) => {
+const getProducts = (req, res, next) => {
   Product.find({ userId: req.user._id })
     // .select('title price -_id')
     // .populate('userId', '-cart')
@@ -139,6 +163,12 @@ const getProducts = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
