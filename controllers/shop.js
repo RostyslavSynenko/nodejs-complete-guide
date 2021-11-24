@@ -1,7 +1,7 @@
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-const getProducts = (req, res) => {
+const getProducts = (req, res, next) => {
   Product.find()
     .then(products => {
       res.render('shop/product-list', {
@@ -12,10 +12,16 @@ const getProducts = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const getProduct = (req, res) => {
+const getProduct = (req, res, next) => {
   const { productId } = req.params;
 
   Product.findById(productId)
@@ -28,10 +34,16 @@ const getProduct = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const getIndex = (req, res) => {
+const getIndex = (req, res, next) => {
   Product.find()
     .then(products => {
       res.render('shop/index', {
@@ -42,10 +54,16 @@ const getIndex = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const getCart = (req, res) => {
+const getCart = (req, res, next) => {
   req.user
     .populate('cart.items.product')
     .then(user => {
@@ -59,10 +77,16 @@ const getCart = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const postCart = (req, res) => {
+const postCart = (req, res, next) => {
   const { productId } = req.body;
 
   Product.findById(productId)
@@ -74,10 +98,16 @@ const postCart = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const postCartDeleteProduct = (req, res) => {
+const postCartDeleteProduct = (req, res, next) => {
   const { productId } = req.body;
 
   req.user
@@ -87,10 +117,16 @@ const postCartDeleteProduct = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const postOrder = (req, res) => {
+const postOrder = (req, res, next) => {
   req.user
     .populate('cart.items.product')
     .then(user => {
@@ -119,10 +155,16 @@ const postOrder = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
-const getOrders = (req, res) => {
+const getOrders = (req, res, next) => {
   Order.find({ 'user.userId': req.user })
     .then(orders => {
       res.render('shop/orders', {
@@ -133,6 +175,12 @@ const getOrders = (req, res) => {
     })
     .catch(err => {
       console.log(err);
+
+      const error = new Error(err);
+
+      error.httpStatusCode = 500;
+
+      return next(error);
     });
 };
 
